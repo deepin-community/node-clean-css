@@ -1,0 +1,18 @@
+#!/usr/bin/make -f
+# -*- makefile -*-
+
+# Uncomment this to turn on verbose mode.
+#export DH_VERBOSE=1
+
+%:
+	dh $@ --with nodejs
+
+override_dh_auto_build:
+	cd debian/node_modules && ln -s ../.. clean-css
+	#NODE_PATH=debian/node_modules help2man \
+	#	--name 'cleancss - fast and efficient CSS optimizer' \
+	#	./cli/bin/cleancss > debian/cleancss.1
+	dh_auto_build --buildsystem=nodejs
+
+override_dh_installchangelogs:
+	dh_installchangelogs History.md

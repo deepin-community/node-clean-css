@@ -1,0 +1,7 @@
+# False positives
+source-contains-prebuilt-javascript-object test/optimizer/level-2/reduce-non-adjacent-test.js line length is 341 characters (>256)
+source-is-missing test/optimizer/level-2/reduce-non-adjacent-test.js line length is 341 characters (>256)
+source-contains-prebuilt-javascript-object test/optimizer/level-2/restructure-test.js line length is 390 characters (>256)
+source-is-missing test/optimizer/level-2/restructure-test.js line length is 390 characters (>256)
+source-contains-prebuilt-javascript-object test/optimizer/level-2/properties/merge-into-shorthands-test.js line length is 321 characters (>256)
+source-is-missing test/optimizer/level-2/properties/merge-into-shorthands-test.js line length is 321 characters (>256)

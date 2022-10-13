@@ -1,0 +1,9 @@
+#!/bin/sh
+
+set -e
+export NODE_PATH=`pwd`/debian/node_modules
+
+vows
+cd cli
+vows
+cd ..
