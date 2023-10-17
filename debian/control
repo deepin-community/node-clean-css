@@ -1,23 +1,28 @@
 Source: node-clean-css
 Maintainer: Debian Javascript Maintainers <pkg-javascript-devel@lists.alioth.debian.org>
-Uploaders: Xavier Guimard <yadd@debian.org>
+Uploaders: Yadd <yadd@debian.org>
 Section: javascript
 Testsuite: autopkgtest-pkg-nodejs
 Priority: optional
-Build-Depends: debhelper-compat (= 12),
-               chai,
-               node-commander,
-               node-deep-equal,
-               node-follow-redirects,
-               node-json-stringify-safe,
-               node-lodash,
-               node-qs,
-               node-requires-port,
-               node-semver,
-               node-source-map,
-               node-vows,
-               pkg-js-tools (>= 0.8.6)
-Standards-Version: 4.5.0
+Build-Depends: debhelper-compat (= 13)
+ , dh-sequence-nodejs
+ , chai <!nocheck>
+ , node-chokidar <!nocheck>
+ , node-commander (>= 7) <!nocheck>
+ , node-deep-equal <!nocheck>
+ , node-eventemitter3 <!nocheck>
+ , node-follow-redirects <!nocheck>
+ , node-http-proxy <!nocheck>
+ , node-json-stringify-safe <!nocheck>
+ , node-lodash <!nocheck>
+ , node-nock <!nocheck>
+ , node-propagate <!nocheck>
+ , node-qs <!nocheck>
+ , node-requires-port <!nocheck>
+ , node-semver <!nocheck>
+ , node-source-map <!nocheck>
+ , node-vows <!nocheck>
+Standards-Version: 4.6.1
 Vcs-Browser: https://salsa.debian.org/js-team/node-clean-css
 Vcs-Git: https://salsa.debian.org/js-team/node-clean-css.git
 Homepage: https://github.com/jakubpawlowicz/clean-css
@@ -25,9 +30,9 @@ Rules-Requires-Root: no
 
 Package: node-clean-css
 Architecture: all
-Depends: ${misc:Depends},
-         nodejs,
-         node-source-map
+Depends: ${misc:Depends}
+ , node-source-map
+Multi-Arch: foreign
 Description: Node.js module for minifying CSS files
  Clean-css is a Node.js module for minifying CSS files. It does the same job as
  YUI Compressor's CSS minifier, but much faster thanks to many speed
@@ -36,11 +41,12 @@ Description: Node.js module for minifying CSS files
 Package: cleancss
 Architecture: all
 Provides: node-clean-css-cli
-Depends: ${misc:Depends},
-         nodejs,
-         node-clean-css,
-         node-commander,
-         node-glob
+Depends: ${misc:Depends}
+ , node-chokidar
+ , node-clean-css
+ , node-commander (>= 7)
+ , node-glob
+ , nodejs:any
 Description: Tool for minifying CSS files
  Clean-css is a Node.js module for minifying CSS files. It does the same job as
  YUI Compressor's CSS minifier, but much faster thanks to many speed

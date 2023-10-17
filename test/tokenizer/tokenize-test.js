@@ -3063,6 +3063,287 @@ vows.describe(tokenize)
           ]
         ]
       ],
+      'variable declaration with whitespace as value': [
+        'a{--test: }',
+        [
+          [
+            'rule',
+            [
+              [
+                'rule-scope',
+                'a',
+                [
+                  [1, 0, undefined]
+                ]
+              ]
+            ],
+            [
+              [
+                'property',
+                [
+                  'property-name',
+                  '--test',
+                  [
+                    [1, 2, undefined]
+                  ]
+                ],
+                [
+                  'property-value',
+                  ' ',
+                  [
+                    [1, 10, undefined]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ],
+      'variable declaration with multiple whitespace as value': [
+        'a{--test:   }',
+        [
+          [
+            'rule',
+            [
+              [
+                'rule-scope',
+                'a',
+                [
+                  [1, 0, undefined]
+                ]
+              ]
+            ],
+            [
+              [
+                'property',
+                [
+                  'property-name',
+                  '--test',
+                  [
+                    [1, 2, undefined]
+                  ]
+                ],
+                [
+                  'property-value',
+                  ' ',
+                  [
+                    [1, 12, undefined]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ],
+      'variable declaration with whitespace as value and semicolon': [
+        'a{--test: ;}',
+        [
+          [
+            'rule',
+            [
+              [
+                'rule-scope',
+                'a',
+                [
+                  [1, 0, undefined]
+                ]
+              ]
+            ],
+            [
+              [
+                'property',
+                [
+                  'property-name',
+                  '--test',
+                  [
+                    [1, 2, undefined]
+                  ]
+                ],
+                [
+                  'property-value',
+                  ' ',
+                  [
+                    [1, 10, undefined]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ],
+      'multiple variable declarations with whitespace as value': [
+        'a{--test1: ;--test2: }',
+        [
+          [
+            'rule',
+            [
+              [
+                'rule-scope',
+                'a',
+                [
+                  [1, 0, undefined]
+                ]
+              ]
+            ],
+            [
+              [
+                'property',
+                [
+                  'property-name',
+                  '--test1',
+                  [
+                    [1, 2, undefined]
+                  ]
+                ],
+                [
+                  'property-value',
+                  ' ',
+                  [
+                    [1, 11, undefined]
+                  ]
+                ]
+              ],
+              [
+                'property',
+                [
+                  'property-name',
+                  '--test2',
+                  [
+                    [1, 12, undefined]
+                  ]
+                ],
+                [
+                  'property-value',
+                  ' ',
+                  [
+                    [1, 21, undefined]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ],
+      'variables with comments inside them 123456': [
+        'a{--test:var(--x,/*!*/ /*!*/);}',
+        [
+          [
+            'rule',
+            [
+              [
+                'rule-scope',
+                'a',
+                [
+                  [1, 0, undefined]
+                ]
+              ]
+            ],
+            [
+              [
+                'property',
+                [
+                  'property-name',
+                  '--test',
+                  [
+                    [1, 2, undefined]
+                  ]
+                ],
+                [
+                  'property-value',
+                  'var(--x,/*!*/ /*!*/)',
+                  [
+                    [1, 9, undefined]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ],
+      'variable declarations with comments inside them 2': [
+        'a{--test1:1;/*!*/--test2:2;/*!*/--test3:3;}',
+        [
+          [
+            'rule',
+            [
+              [
+                'rule-scope',
+                'a',
+                [
+                  [1, 0, undefined]
+                ]
+              ]
+            ],
+            [
+              [
+                'property',
+                [
+                  'property-name',
+                  '--test1',
+                  [
+                    [1, 2, undefined]
+                  ]
+                ],
+                [
+                  'property-value',
+                  '1',
+                  [
+                    [1, 10, undefined]
+                  ]
+                ]
+              ],
+              [
+                'comment',
+                '/*!*/',
+                [
+                  [ 1, 12, undefined ]
+                ]
+              ],
+              [
+                'property',
+                [
+                  'property-name',
+                  '--test2',
+                  [
+                    [ 1, 17, undefined ]
+                  ]
+                ],
+                [
+                  'property-value',
+                  '2',
+                  [
+                    [ 1, 25, undefined ]
+                  ]
+                ]
+              ],
+              [
+                'comment',
+                '/*!*/',
+                [
+                  [ 1, 27, undefined ]
+                ]
+              ],
+              [
+                'property',
+                [
+                  'property-name',
+                  '--test3',
+                  [
+                    [ 1, 32, undefined ]
+                  ]
+                ],
+                [
+                  'property-value',
+                  '3',
+                  [
+                    [ 1, 40, undefined ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ],
       '_:-ms-lang flat block': [
         '_:-ms-lang(x),@-ms-viewport{color:red}',
         [

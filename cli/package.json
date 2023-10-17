@@ -1,6 +1,6 @@
 {
   "name": "clean-css-cli",
-  "version": "4.3.0",
+  "version": "5.6.1",
   "description": "A command-line interface to clean-css CSS optimization library",
   "scripts": {
     "check": "jshint ./bin/cleancss .",
@@ -9,7 +9,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/jakubpawlowicz/clean-css-cli.git"
+    "url": "git+https://github.com/clean-css/clean-css-cli.git"
   },
   "keywords": [
     "css",
@@ -19,31 +19,33 @@
   "bin": {
     "cleancss": "./bin/cleancss"
   },
-  "author": "Jakub Pawlowicz <contact@jakubpawlowicz.com> (http://twitter.com/jakubpawlowicz)",
+  "author": "Jakub Pawlowicz <contact@jakubpawlowicz.com>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/jakubpawlowicz/clean-css-cli/issues"
+    "url": "https://github.com/clean-css/clean-css-cli/issues"
   },
   "main": "index.js",
   "files": [
     "bin",
     "History.md",
     "index.js",
-    "LICENSE"
+    "LICENSE",
+    "README.md"
   ],
-  "homepage": "https://github.com/jakubpawlowicz/clean-css-cli#readme",
+  "homepage": "https://github.com/clean-css/clean-css-cli#readme",
   "dependencies": {
-    "clean-css": "^4.2.1",
-    "commander": "2.x",
-    "glob": "7.x"
+    "chokidar": "^3.5.2",
+    "clean-css": "^5.3.1",
+    "commander": "7.x",
+    "glob": "^7.1.6"
   },
   "devDependencies": {
     "http-proxy": "1.x",
-    "jshint": "2.x",
+    "jshint": "^2.13.0",
     "source-map": "0.5.x",
-    "vows": "0.8.x"
+    "vows": "^0.8.3"
   },
   "engines": {
-    "node": ">= 4.0"
+    "node": ">= 10.12.0"
   }
 }

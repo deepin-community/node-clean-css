@@ -885,6 +885,18 @@ vows.describe('integration tests')
     })
   )
   .addBatch(
+    optimizerContext('units with level 2', {
+      'uppercase': [
+        '.block{border:1PX solid #eee}',
+        '.block{border:1PX solid #eee}'
+      ],
+      'mixed case': [
+        '.block{border:1ReM solid #eee}',
+        '.block{border:1ReM solid #eee}'
+      ]
+    }, { level: 2 })
+  )
+  .addBatch(
     optimizerContext('floats', {
       'strips zero in fractions': [
         'a{ margin-bottom: 0.5em}',
@@ -929,6 +941,14 @@ vows.describe('integration tests')
       'do not round ems': [
         'div{font-size:1.505em}',
         'div{font-size:1.505em}'
+      ],
+      'leave "fractions" in urls alone': [
+        '.block{background:url(\'foo.10.png\')}',
+        '.block{background:url(\'foo.10.png\')}'
+      ],
+      'leave "fractions" in image sets alone': [
+        '.block{background:image-set(url(\'foo.10.png\') 1x)}',
+        '.block{background:image-set(url(\'foo.10.png\') 1x)}'
       ]
     })
   )
@@ -1266,13 +1286,21 @@ vows.describe('integration tests')
         'a{background:url(/images/blank.png)}',
         'a{background:url(/images/blank.png)}'
       ],
-      'strip quotes from base64 encoded PNG data URI': [
+      'keep quotes in base64 encoded PNG data URI': [
         '.icon-logo{background-image:url(\'data:image/png;base64,iVBORw0\')}',
-        '.icon-logo{background-image:url(data:image/png;base64,iVBORw0)}'
+        '.icon-logo{background-image:url(\'data:image/png;base64,iVBORw0\')}'
       ],
-      'strip quotes from base64 encoded ICO data URI': [
+      'keep quotes in base64 encoded ICO data URI': [
         '.icon-logo{background-image:url("data:image/x-icon;base64,AAABAAEAEBA")}',
-        '.icon-logo{background-image:url(data:image/x-icon;base64,AAABAAEAEBA)}'
+        '.icon-logo{background-image:url("data:image/x-icon;base64,AAABAAEAEBA")}'
+      ],
+      'keep quotes in font data URI with mediatype': [
+        '@font-face{src:url("data:application/x-font-woff;base64,d09GRk9UVE8AAENAAA0AAAAA")}',
+        '@font-face{src:url("data:application/x-font-woff;base64,d09GRk9UVE8AAENAAA0AAAAA")}'
+      ],
+      'keep quotes in font data URI without mediatype': [
+        '@font-face{src:url("data:;base64,d09GRk9UVE8AAENAAA0AAAAA")}',
+        '@font-face{src:url("data:;base64,d09GRk9UVE8AAENAAA0AAAAA")}'
       ],
       'cut off url content on selector level': [
         'a{background:url(image/}',
@@ -1286,14 +1314,6 @@ vows.describe('integration tests')
         '@font-face{src:url(data:application/x-font-woff;base64,d09GRk9UVE8AAENAAA0AAAAA',
         ''
       ],
-      'strip single parentheses': [
-        'a{background:url(\'/images/blank.png\')}',
-        'a{background:url(/images/blank.png)}'
-      ],
-      'strip double parentheses': [
-        'a{background:url("/images/blank.png")}',
-        'a{background:url(/images/blank.png)}'
-      ],
       'keep quoting if whitespace': [
         'a{background:url("/images/blank image.png")}',
         'a{background:url("/images/blank image.png")}'
@@ -1301,14 +1321,6 @@ vows.describe('integration tests')
       'keep quoting if whitespace inside @font-face': [
         '@font-face{src:url("Helvetica Neue.eot")}',
         '@font-face{src:url("Helvetica Neue.eot")}'
-      ],
-      'strip more': [
-        'p{background:url("/images/blank.png")}b{display:block}a{background:url("/images/blank2.png")}',
-        'p{background:url(/images/blank.png)}b{display:block}a{background:url(/images/blank2.png)}'
-      ],
-      'not strip comments if spaces inside': [
-        'p{background:url("/images/long image name.png")}b{display:block}a{background:url("/images/no-spaces.png")}',
-        'p{background:url("/images/long image name.png")}b{display:block}a{background:url(/images/no-spaces.png)}'
       ],
       'not add a space before url\'s hash': [
         'a{background:url(/fonts/d90b3358-e1e2-4abb-ba96-356983a54c22.svg#d90b3358-e1e2-4abb-ba96-356983a54c22)}',
@@ -1334,7 +1346,55 @@ vows.describe('integration tests')
         'a{background:url(/very/long/' + lineBreak + 'path)}',
         'a{background:url(/very/long/path)}'
       ],
-      'strip new line in urls which could be unquoted': [
+      'uppercase': [
+        'a{background-image: URL("images/image.png");}',
+        'a{background-image:url("images/image.png")}'
+      ],
+      'image-set': [
+        'a{background:url(one.png);background:-webkit-image-set(url(one.png) 1x,url(two.png) 2x)}',
+        'a{background:url(one.png);background:-webkit-image-set(url(one.png) 1x,url(two.png) 2x)}'
+      ],
+      'with square brackets and protocol-less value': [
+        '.block{background:url([//example.com/logo.png])}',
+        '.block{background:url([//example.com/logo.png])}'
+      ]
+    })
+  )
+  .addBatch(
+    optimizerContext('urls with URL quotes removing', {
+      'strip quotes from base64 encoded PNG data URI': [
+        '.icon-logo{background-image:url(\'data:image/png;base64,iVBORw0\')}',
+        '.icon-logo{background-image:url(data:image/png;base64,iVBORw0)}'
+      ],
+      'strip quotes from base64 encoded ICO data URI': [
+        '.icon-logo{background-image:url("data:image/x-icon;base64,AAABAAEAEBA")}',
+        '.icon-logo{background-image:url(data:image/x-icon;base64,AAABAAEAEBA)}'
+      ],
+      'strip quotes from font data URI with mediatype': [
+        '@font-face{src:url("data:application/x-font-woff;base64,d09GRk9UVE8AAENAAA0AAAAA")}',
+        '@font-face{src:url(data:application/x-font-woff;base64,d09GRk9UVE8AAENAAA0AAAAA)}'
+      ],
+      'strip quotes from font data URI without mediatype': [
+        '@font-face{src:url("data:;base64,d09GRk9UVE8AAENAAA0AAAAA")}',
+        '@font-face{src:url(data:;base64,d09GRk9UVE8AAENAAA0AAAAA)}'
+      ],
+      'strip single parentheses': [
+        'a{background:url(\'/images/blank.png\')}',
+        'a{background:url(/images/blank.png)}'
+      ],
+      'strip double parentheses': [
+        'a{background:url("/images/blank.png")}',
+        'a{background:url(/images/blank.png)}'
+      ],
+      'strip more': [
+        'p{background:url("/images/blank.png")}b{display:block}a{background:url("/images/blank2.png")}',
+        'p{background:url(/images/blank.png)}b{display:block}a{background:url(/images/blank2.png)}'
+      ],
+      'not strip comments if spaces inside': [
+        'p{background:url("/images/long image name.png")}b{display:block}a{background:url("/images/no-spaces.png")}',
+        'p{background:url("/images/long image name.png")}b{display:block}a{background:url(/images/no-spaces.png)}'
+      ],
+      'strip new line in urls': [
         'a{background:url("/very/long/' + lineBreak + 'path")}',
         'a{background:url(/very/long/path)}'
       ],
@@ -1342,11 +1402,7 @@ vows.describe('integration tests')
         'a{background-image: URL("images/image.png");}',
         'a{background-image:url(images/image.png)}'
       ],
-      'image-set': [
-        'a{background:url(one.png);background:-webkit-image-set(url(one.png) 1x,url(two.png) 2x)}',
-        'a{background:url(one.png);background:-webkit-image-set(url(one.png) 1x,url(two.png) 2x)}'
-      ]
-    })
+    }, { compatibility: { properties: { urlQuotes: false } } })
   )
   .addBatch(
     optimizerContext('urls custom protocol and url rewriting', {
@@ -1370,14 +1426,6 @@ vows.describe('integration tests')
   )
   .addBatch(
     optimizerContext('urls whitespace with url rewriting', {
-      'strip single parentheses': [
-        'a{background:url("/images/blank.png")}',
-        'a{background:url(/images/blank.png)}'
-      ],
-      'strip double parentheses': [
-        'a{background:url("/images/blank.png")}',
-        'a{background:url(/images/blank.png)}'
-      ],
       'keep quoting if whitespace': [
         'a{background:url("/images/blank image.png")}',
         'a{background:url("/images/blank image.png")}'
@@ -1396,7 +1444,7 @@ vows.describe('integration tests')
       ],
       'quotes SVG data URI trailed with !important': [
         'div{background:url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAHOSURBVEhLrZa/SgNBEMZzh0WKCClSCKaIYOED+AAKeQQLG8HWztLCImBrYadgIdY+gIKNYkBFSwu7CAoqCgkkoGBI/E28PdbLZmeDLgzZzcx83/zZ2SSXC1j9fr+I1Hq93g2yxH4iwM1vkoBWAdxCmpzTxfkN2RcyZNaHFIkSo10+8kgxkXIURV5HGxTmFuc75B2RfQkpxHG8aAgaAFa0tAHqYFfQ7Iwe2yhODk8+J4C7yAoRTWI3w/4klGRgR4lO7Rpn9+gvMyWp+uxFh8+H+ARlgN1nJuJuQAYvNkEnwGFck18Er4q3egEc/oO+mhLdKgRyhdNFiacC0rlOCbhNVz4H9FnAYgDBvU3QIioZlJFLJtsoHYRDfiZoUyIxqCtRpVlANq0EU4dApjrtgezPFad5S19Wgjkc0hNVnuF4HjVA6C7QrSIbylB+oZe3aHgBsqlNqKYH48jXyJKMuAbiyVJ8KzaB3eRc0pg9VwQ4niFryI68qiOi3AbjwdsfnAtk0bCjTLJKr6mrD9g8iq/S/B81hguOMlQTnVyG40wAcjnmgsCNESDrjme7wfftP4P7SP4N3CJZdvzoNyGq2c/HWOXJGsvVg+RA/k2MC/wN6I2YA2Pt8GkAAAAASUVORK5CYII=")!important}',
-        'div{background:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAHOSURBVEhLrZa/SgNBEMZzh0WKCClSCKaIYOED+AAKeQQLG8HWztLCImBrYadgIdY+gIKNYkBFSwu7CAoqCgkkoGBI/E28PdbLZmeDLgzZzcx83/zZ2SSXC1j9fr+I1Hq93g2yxH4iwM1vkoBWAdxCmpzTxfkN2RcyZNaHFIkSo10+8kgxkXIURV5HGxTmFuc75B2RfQkpxHG8aAgaAFa0tAHqYFfQ7Iwe2yhODk8+J4C7yAoRTWI3w/4klGRgR4lO7Rpn9+gvMyWp+uxFh8+H+ARlgN1nJuJuQAYvNkEnwGFck18Er4q3egEc/oO+mhLdKgRyhdNFiacC0rlOCbhNVz4H9FnAYgDBvU3QIioZlJFLJtsoHYRDfiZoUyIxqCtRpVlANq0EU4dApjrtgezPFad5S19Wgjkc0hNVnuF4HjVA6C7QrSIbylB+oZe3aHgBsqlNqKYH48jXyJKMuAbiyVJ8KzaB3eRc0pg9VwQ4niFryI68qiOi3AbjwdsfnAtk0bCjTLJKr6mrD9g8iq/S/B81hguOMlQTnVyG40wAcjnmgsCNESDrjme7wfftP4P7SP4N3CJZdvzoNyGq2c/HWOXJGsvVg+RA/k2MC/wN6I2YA2Pt8GkAAAAASUVORK5CYII=)!important}'
+        'div{background:url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAHOSURBVEhLrZa/SgNBEMZzh0WKCClSCKaIYOED+AAKeQQLG8HWztLCImBrYadgIdY+gIKNYkBFSwu7CAoqCgkkoGBI/E28PdbLZmeDLgzZzcx83/zZ2SSXC1j9fr+I1Hq93g2yxH4iwM1vkoBWAdxCmpzTxfkN2RcyZNaHFIkSo10+8kgxkXIURV5HGxTmFuc75B2RfQkpxHG8aAgaAFa0tAHqYFfQ7Iwe2yhODk8+J4C7yAoRTWI3w/4klGRgR4lO7Rpn9+gvMyWp+uxFh8+H+ARlgN1nJuJuQAYvNkEnwGFck18Er4q3egEc/oO+mhLdKgRyhdNFiacC0rlOCbhNVz4H9FnAYgDBvU3QIioZlJFLJtsoHYRDfiZoUyIxqCtRpVlANq0EU4dApjrtgezPFad5S19Wgjkc0hNVnuF4HjVA6C7QrSIbylB+oZe3aHgBsqlNqKYH48jXyJKMuAbiyVJ8KzaB3eRc0pg9VwQ4niFryI68qiOi3AbjwdsfnAtk0bCjTLJKr6mrD9g8iq/S/B81hguOMlQTnVyG40wAcjnmgsCNESDrjme7wfftP4P7SP4N3CJZdvzoNyGq2c/HWOXJGsvVg+RA/k2MC/wN6I2YA2Pt8GkAAAAASUVORK5CYII=")!important}'
       ],
       'quotes SVG data URI trailed with !important without quotes': [
         'div{background:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAHOSURBVEhLrZa/SgNBEMZzh0WKCClSCKaIYOED+AAKeQQLG8HWztLCImBrYadgIdY+gIKNYkBFSwu7CAoqCgkkoGBI/E28PdbLZmeDLgzZzcx83/zZ2SSXC1j9fr+I1Hq93g2yxH4iwM1vkoBWAdxCmpzTxfkN2RcyZNaHFIkSo10+8kgxkXIURV5HGxTmFuc75B2RfQkpxHG8aAgaAFa0tAHqYFfQ7Iwe2yhODk8+J4C7yAoRTWI3w/4klGRgR4lO7Rpn9+gvMyWp+uxFh8+H+ARlgN1nJuJuQAYvNkEnwGFck18Er4q3egEc/oO+mhLdKgRyhdNFiacC0rlOCbhNVz4H9FnAYgDBvU3QIioZlJFLJtsoHYRDfiZoUyIxqCtRpVlANq0EU4dApjrtgezPFad5S19Wgjkc0hNVnuF4HjVA6C7QrSIbylB+oZe3aHgBsqlNqKYH48jXyJKMuAbiyVJ8KzaB3eRc0pg9VwQ4niFryI68qiOi3AbjwdsfnAtk0bCjTLJKr6mrD9g8iq/S/B81hguOMlQTnVyG40wAcjnmgsCNESDrjme7wfftP4P7SP4N3CJZdvzoNyGq2c/HWOXJGsvVg+RA/k2MC/wN6I2YA2Pt8GkAAAAASUVORK5CYII=)!important}',
@@ -1410,7 +1458,19 @@ vows.describe('integration tests')
         'a{background:url(\'data:image/svg+xml,%3csvg%20xmlns%3d"http://www.w3.org/2000/svg"/%3e\')}',
         'a{background:url(\'data:image/svg+xml,%3csvg%20xmlns%3d"http://www.w3.org/2000/svg"/%3e\')}'
       ]
-    })
+    }, { rebase: true })
+  )
+  .addBatch(
+    optimizerContext('urls whitespace with url rewriting and no URL quotes', {
+      'strip single parentheses': [
+        'a{background:url("/images/blank.png")}',
+        'a{background:url(/images/blank.png)}'
+      ],
+      'strip double parentheses': [
+        'a{background:url("/images/blank.png")}',
+        'a{background:url(/images/blank.png)}'
+      ]
+    }, { compatibility: { properties: { urlQuotes: false } }, rebase: true })
   )
   .addBatch(
     optimizerContext('urls quotes in compatibility mode', {
@@ -1430,7 +1490,7 @@ vows.describe('integration tests')
         }},
         'div{background:url(temp/test.png)}'
       ]
-    }, { compatibility: { properties: { urlQuotes: true } } })
+    }, { rebase: true, compatibility: { properties: { urlQuotes: true } } })
   )
   .addBatch(
     optimizerContext('urls rewriting - rebaseTo', {
@@ -1456,9 +1516,9 @@ vows.describe('integration tests')
       ],
       'chrome extension': [
         'a{background-image:url("chrome-extension://__MSG_@@extension_id__/someFile.png")}',
-        'a{background-image:url(chrome-extension://__MSG_@@extension_id__/someFile.png)}'
+        'a{background-image:url("chrome-extension://__MSG_@@extension_id__/someFile.png")}'
       ]
-    }, { rebaseTo: path.join('test', 'fixtures') })
+    }, { rebase: true, rebaseTo: path.join('test', 'fixtures') })
   )
   .addBatch(
     optimizerContext('urls rewriting - rebaseTo as a missing directory', {
@@ -1474,7 +1534,7 @@ vows.describe('integration tests')
         '@import url(/test/fixtures/partials-relative/base.css);',
         'a{background:url(../fixtures/partials/extra/down.gif) 0 0 no-repeat}'
       ]
-    }, { rebaseTo: path.join('test', 'fixtures2') })
+    }, { rebase: true, rebaseTo: path.join('test', 'fixtures2') })
   )
   .addBatch(
     optimizerContext('urls rewriting - rebase off', {
@@ -1482,8 +1542,6 @@ vows.describe('integration tests')
         '@import url(test/fixtures/partials-relative/base.css);',
         'a{background:url(../partials/extra/down.gif) 0 0 no-repeat}'
       ]
-    }, {
-      rebase: false
     })
   )
   .addBatch(
@@ -1499,6 +1557,10 @@ vows.describe('integration tests')
       'remove font family quotation': [
         'a{font-family:"Helvetica",\'Arial\'}',
         'a{font-family:Helvetica,Arial}'
+      ],
+      'keeps quoting for generic families' : [
+        '.block{font-family:"cursive","default","emoji","fangsong","fantasy","inherit","initial","math","monospace","revert","revert-layer","sans-serif","serif","system-ui","ui-monospace","ui-rounded","ui-sans-serif","ui-serif","unset"}',
+        '.block{font-family:"cursive","default","emoji","fangsong","fantasy","inherit","initial","math","monospace","revert","revert-layer","sans-serif","serif","system-ui","ui-monospace","ui-rounded","ui-sans-serif","ui-serif","unset"}'
       ],
       'do not remove font family double quotation if space inside': [
         'a{font-family:"Courier New"}',
@@ -1671,6 +1733,10 @@ vows.describe('integration tests')
       'remove quotes in vendor prefixed animation-name': [
         'div{-moz-animation-name:\'test\';-o-animation-name:\'test\';-webkit-animation-name:\'test\'}',
         'div{-moz-animation-name:test;-o-animation-name:test;-webkit-animation-name:test}'
+      ],
+      'animation named null': [
+        '@keyframes slideout-null{0%{opacity:1}100%{opacity:1}}.null{animation:slideout-null 10ms}',
+        '@keyframes slideout-null{0%{opacity:1}100%{opacity:1}}.null{animation:slideout-null 10ms}'
       ]
     })
   )
@@ -2023,7 +2089,7 @@ vows.describe('integration tests')
       ],
       'remote inside local': [
         '@import url(test/fixtures/partials/remote.css);',
-        '@import url(http://jakubpawlowicz.com/styles.css);'
+        '@import url(http://clean-css.github.io/styles.css);'
       ],
       'remote inside local after content': [
         'a{color:red}@import url(test/fixtures/partials/remote.css);',
@@ -2037,6 +2103,22 @@ vows.describe('integration tests')
         generateComments(30000) + '@import url(fonts.google.com/some.css);',
         ''
       ]
+    }, { rebase: true })
+  )
+  .addBatch(
+    optimizerContext('@import with rebase turned off', {
+      'of a file with a relative resource path': [
+        '@import url(test/fixtures/partials/three.css);',
+        '.three{background-image:url(extra/down.gif)}'
+      ],
+      'of a file with an absolute resource path': [
+        '@import url(test/fixtures/partials/four.css);',
+        '.four{background-image:url(/partials/extra/down.gif)}'
+      ],
+      'of a file with a resource URI': [
+        '@import url(test/fixtures/partials/five.css);',
+        '.five{background:url(data:image/jpeg;base64,/9j/)}'
+      ],
     })
   )
   .addBatch(
@@ -2334,8 +2416,8 @@ vows.describe('integration tests')
         'a:focus,b{color:red}'
       ],
       'rules with well-supported pseudo classes should be merged #2': [
-        'a:nth-of-type(1){color:red}b{color:red}',
-        'a:nth-of-type(1),b{color:red}'
+        'a:nth-of-type(5){color:red}b{color:red}',
+        'a:nth-of-type(5),b{color:red}'
       ],
       'rules with well-supported pseudo classes should be merged #3': [
         'a:first-of-type{color:red}b{color:red}',
@@ -2420,6 +2502,10 @@ vows.describe('integration tests')
       '@supports': [
         '@supports (display:flexbox){.flex{display:flexbox}}',
         '@supports (display:flexbox){.flex{display:flexbox}}'
+      ],
+      '@supports with quoted text': [
+        '@supports (font-feature-settings:"liga" 0){html{--font:"font-with-features",helvetica,sans-serif}}',
+        '@supports (font-feature-settings:"liga" 0){html{--font:"font-with-features",helvetica,sans-serif}}'
       ],
       '@-ms-viewport': [
         '@-ms-viewport{width:device-width}',
@@ -2568,9 +2654,33 @@ vows.describe('integration tests')
     })
   )
   .addBatch(
-    optimizerContext('variables', {
+    optimizerContext('variables - level 1', {
+      'whitespace inside definition #1': [
+        'a{--border:var(\n--default-border\n\n)}',
+        'a{--border:var(--default-border)}'
+      ],
+      'whitespace inside definition #2': [
+        'a{--border:1px solid var(\n--default-color\n\n)}',
+        'a{--border:1px solid var(--default-color)}'
+      ],
+      'whitespace inside declarations': [
+        'a{--border:#000}.one{border:1px solid var(\n--border\n)}',
+        'a{--border:#000}.one{border:1px solid var(--border)}'
+      ],
+      'more complex case': [
+        '.alert--primary{--ifm-alert-background-color:var(\n        --ifm-color-primary-contrast-background\n      );--ifm-alert-background-color-highlight:rgba(53, 120, 229, 0.15);--ifm-alert-foreground-color:var(\n        --ifm-color-primary-contrast-foreground\n      );--ifm-alert-border-color:var(--ifm-color-primary-dark)}',
+        '.alert--primary{--ifm-alert-background-color:var(--ifm-color-primary-contrast-background);--ifm-alert-background-color-highlight:rgba(53, 120, 229, 0.15);--ifm-alert-foreground-color:var(--ifm-color-primary-contrast-foreground);--ifm-alert-border-color:var(--ifm-color-primary-dark)}'
+      ]
+    })
+  )
+  .addBatch(
+    optimizerContext('variables - level 2', {
       'stripping': [
         'a{--border:#000}.one{border:1px solid var(--border)}',
+        'a{--border:#000}.one{border:1px solid var(--border)}'
+      ],
+      'whitespace inside declarations': [
+        'a{--border:#000}.one{border:1px solid var(\n--border\n)}',
         'a{--border:#000}.one{border:1px solid var(--border)}'
       ],
       'all values': [
@@ -2592,6 +2702,26 @@ vows.describe('integration tests')
       'Polymer mixins - inlined variables': [
         '.spinner{-webkit-animation:container-rotate var(--paper-spinner-container-rotation-duration) linear infinite}',
         '.spinner{-webkit-animation:container-rotate var(--paper-spinner-container-rotation-duration) linear infinite}'
+      ],
+      'comments #1': [
+        '.test {--tw-blur: var(--tw-empty,/*!*/ /*!*/);}',
+        '.test{--tw-blur:var(--tw-empty,/*!*/ /*!*/)}'
+      ],
+      'comments #2': [
+        '.test {--tw-blur: var(--tw-empty,/*!*/ /*!*/);display: block}',
+        '.test{--tw-blur:var(--tw-empty,/*!*/ /*!*/);display:block}'
+      ],
+      'comments #3': [
+        '.test {--tw-blur: var(--tw-empty,/*!*/ /*!*/);color:hsl(0, 1%, 99%)}',
+        '.test{--tw-blur:var(--tw-empty,/*!*/ /*!*/);color:#fcfcfc}'
+      ],
+      'comments #4': [
+        ':root{/* Site container */--a:20px;/* Z indices for modals and dialogs */--foo:5050}.bar{z-index:5050;z-index:var(--foo)}',
+        ':root{--a:20px;--foo:5050}.bar{z-index:5050;z-index:var(--foo)}'
+      ],
+      'comments #5': [
+        ':host{/* this will stay */--this_will_stay: 1;/* this will disappear */--this_will_disappear: 1;/* this will also disappear */--this_will_also_disappear: 1;--this_will_stay_aswell: 1;--this_will_stay_too: 1;width: 1px;height: 1px}',
+        ':host{--this_will_stay:1;--this_will_disappear:1;--this_will_also_disappear:1;--this_will_stay_aswell:1;--this_will_stay_too:1;width:1px;height:1px}'
       ]
     }, { level: 2 })
   )
@@ -2640,6 +2770,30 @@ vows.describe('integration tests')
       'at-rule and rules': [
         'a{display:block;@apply(--rule1);color:red}',
         'a {' + lineBreak + '  display: block;' + lineBreak + '  @apply(--rule1);' + lineBreak + '  color: red' + lineBreak + '}'
+      ],
+      'inside quoted text': [
+        '.block::before{content:"\\"()"}',
+        '.block::before {' + lineBreak + '  content: "\\"()"' + lineBreak + '}'
+      ]
+    }, { format: 'beautify' })
+  )
+  .addBatch(
+    optimizerContext('beautify formatting with last semicolon on', {
+      'keeps semicolon': [
+        '.block{margin-top:1em;margin-bottom:1em;}',
+        '.block {' + lineBreak + '  margin-top: 1em;' + lineBreak + '  margin-bottom: 1em;' + lineBreak + '}'
+      ]
+    }, { format: { breaks: { afterAtRule: true, afterBlockBegins: true, afterBlockEnds: true, afterComment: true, afterProperty: true, afterRuleBegins: true, afterRuleEnds: true, beforeBlockEnds: true, betweenSelectors: true }, indentBy: 2, spaces: { aroundSelectorRelation: true, beforeBlockBegins: true, beforeValue: true }, semicolonAfterLastProperty: true } })
+  )
+  .addBatch(
+    optimizerContext('beautify formatting with comments', {
+      'adds line break after comment inside property': [
+        '.block{/*! Comment 1 *//*! Comment 2 */margin-top:1em;margin-bottom:1em}',
+        '.block {' + lineBreak + '  /*! Comment 1 */' + lineBreak + '  /*! Comment 2 */' + lineBreak + '  margin-top: 1em;' + lineBreak + '  margin-bottom: 1em' + lineBreak + '}'
+      ],
+      'adds line break after comment inside nested block': [
+        '@media screen{/*! Comment 1 */.block{/*! Comment 2 */margin-top:1em;margin-bottom:1em}}',
+        '@media screen {' + lineBreak + '  /*! Comment 1 */' + lineBreak + '  .block {' + lineBreak + '    /*! Comment 2 */' + lineBreak + '    margin-top: 1em;' + lineBreak + '    margin-bottom: 1em' + lineBreak + '  }' + lineBreak + '}'
       ]
     }, { format: 'beautify' })
   )
@@ -2657,7 +2811,23 @@ vows.describe('integration tests')
         '@media screen{a{color:red}div{color:#000}}',
         '@media screen{' + lineBreak + '\ta{' + lineBreak + '\t\tcolor:red' + lineBreak + '\t}\tdiv{' + lineBreak + '\t\tcolor:#000' + lineBreak + '\t}' + lineBreak + '}'
       ]
-    }, { format: { breaks: { afterBlockBegins: true, afterProperty: true, afterRuleBegins: true }, indentWith: 'tab', indentBy: 1 } })
+    }, { format: { breaks: { afterBlockBegins: true, afterProperty: true, afterRuleBegins: true, beforeBlockEnds: true }, indentWith: 'tab', indentBy: 1 } })
+  )
+  .addBatch(
+    optimizerContext('custom formatting with break numbers', {
+      'rule': [
+        'a{color:red}',
+        'a{' + lineBreak + '\tcolor:red' + lineBreak + '}'
+      ],
+      'at rule block': [
+        '@font-face{font-family:test;src:url(/fonts/test.woff)}',
+        '@font-face{' + lineBreak + '\tfont-family:test;' + lineBreak + '\tsrc:url(/fonts/test.woff)' + lineBreak + '}'
+      ],
+      'nested rule block rules': [
+        '@media screen{a{color:red}div{color:#000}}',
+        '@media screen{' + lineBreak + '\ta{' + lineBreak + '\t\tcolor:red' + lineBreak + '\t}' + lineBreak + lineBreak + '\tdiv{' + lineBreak + '\t\tcolor:#000' + lineBreak + '\t}' + lineBreak + lineBreak + '}'
+      ]
+    }, { format: { breaks: { afterBlockBegins: 1, afterProperty: 1, afterRuleBegins: '1', afterRuleEnds: '2', beforeBlockEnds: 2 }, indentWith: 'tab', indentBy: 1 } })
   )
   .addBatch(
     optimizerContext('max line length', {
@@ -2682,5 +2852,17 @@ vows.describe('integration tests')
         '.spinner{-webkit-animation:container-rotate ' + lineBreak + 'var(--paper-spinner-container-rotation-duration) linear infinite}div{background:' + lineBreak + 'url(/very/long/path/to/image.png) repeat}'
       ]
     }, { format: { wrapAt: 80 }, sourceMap: true })
+  )
+  .addBatch(
+    optimizerContext('SVG properties', {
+      'are kept #1': [
+        'node:hover circle{r:18;stroke:orange}',
+        'node:hover circle{r:18;stroke:orange}'
+      ],
+      'are kept #2': [
+        'node:hover circle{rx:18;stroke:orange}',
+        'node:hover circle{rx:18;stroke:orange}'
+      ]
+    })
   )
   .export(module);

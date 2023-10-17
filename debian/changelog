@@ -1,3 +1,46 @@
+node-clean-css (5.3.1+~5.6.1-1) unstable; urgency=medium
+
+  * Declare compliance with policy 4.6.1
+  * New upstream version 5.3.1+~5.6.1
+
+ -- Yadd <yadd@debian.org>  Sun, 17 Jul 2022 08:25:59 +0200
+
+node-clean-css (5.2.4+~5.5.2-1) unstable; urgency=medium
+
+  * Set upstream metadata fields: Security-Contact.
+  * New upstream version 5.2.4+~5.5.2
+  * Back to unstable
+
+ -- Yadd <yadd@debian.org>  Sun, 06 Feb 2022 15:03:14 +0100
+
+node-clean-css (5.2.2+~5.5.0-1) experimental; urgency=medium
+
+  * New upstream version 5.2.2+~5.5.0
+  * Require node-commander ≥ 7
+
+ -- Yadd <yadd@debian.org>  Sun, 02 Jan 2022 22:20:55 +0100
+
+node-clean-css (4.2.3+~4.3.0-2) unstable; urgency=medium
+
+  [ Debian Janitor ]
+  * Apply multi-arch hints. + node-clean-css: Add Multi-Arch: foreign.
+
+  [ Yadd ]
+  * Bump debhelper compatibility level to 13
+  * Add ctype=nodejs to component(s)
+  * Fix GitHub tags regex
+  * Use dh-sequence-nodejs
+  * Add missing build dependency on dh addon.
+  * Update standards version to 4.6.0, no changes needed.
+  * Fix filenamemangle
+  * Update nodejs dependency to nodejs:any
+  * Update test
+  * Replace embedded test modules by dependencies to new Debian packages
+  * Update lintian overrides
+  * Update copyright
+
+ -- Yadd <yadd@debian.org>  Sun, 02 Jan 2022 19:07:56 +0100
+
 node-clean-css (4.2.3+~4.3.0-1) unstable; urgency=medium
 
   [ Debian Janitor ]

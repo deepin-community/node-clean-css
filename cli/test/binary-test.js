@@ -1,5 +1,6 @@
 var assert = require('assert');
 var exec = require('child_process').exec;
+var execSync = require('child_process').execSync;
 var fs = require('fs');
 var http = require('http');
 var path = require('path');
@@ -12,6 +13,9 @@ var vows = require('vows');
 
 function binaryContext(options, context) {
   context.topic = function () {
+    (context.setup || Function.prototype)();
+    delete context.setup;
+
     // We add __DIRECT__=1 to force binary into 'non-piped' mode
     exec('__DIRECT__=1 ./bin/cleancss ' + options, this.callback);
   };
@@ -196,6 +200,15 @@ vows.describe('cleancss')
       teardown: function () {
         deleteFile('./reset1-min.css');
       }
+    }),
+    'to file when target path does not exist': binaryContext('-o ./test/fixtures-temp/reset-min.css ./test/fixtures/reset.css', {
+      'should create a directory and optimized file': function () {
+        assert.isTrue(fs.existsSync('test/fixtures-temp'));
+        assert.isTrue(fs.existsSync('test/fixtures-temp/reset-min.css'));
+      },
+      teardown: function () {
+        exec('rm -rf test/fixtures-temp');
+      }
     })
   })
   .addBatch({
@@ -236,10 +249,10 @@ vows.describe('cleancss')
     'relative image paths': {
       'no output': binaryContext('./test/fixtures/partials-relative/base.css', {
         'should leave paths': function (error, stdout) {
-          assert.equal(stdout, 'a{background:url(test/fixtures/partials/extra/down.gif) 0 0 no-repeat}');
+          assert.equal(stdout, 'a{background:url(../partials/extra/down.gif) 0 0 no-repeat}');
         }
       }),
-      'output': binaryContext('-o ./base1-min.css ./test/fixtures/partials-relative/base.css', {
+      'output': binaryContext('--with-rebase -o ./base1-min.css ./test/fixtures/partials-relative/base.css', {
         'should rewrite path relative to current path': function () {
           var minimized = fs.readFileSync('./base1-min.css', 'utf-8');
           assert.equal(minimized, 'a{background:url(test/fixtures/partials/extra/down.gif) 0 0 no-repeat}');
@@ -269,14 +282,14 @@ vows.describe('cleancss')
   })
   .addBatch({
     'complex import and url rebasing': {
-      'absolute': binaryContext('./test/fixtures/rebasing/assets/ui.css', {
+      'absolute': binaryContext('--with-rebase ./test/fixtures/rebasing/assets/ui.css', {
         'should rebase urls correctly': function (error, stdout) {
           assert.include(stdout, 'url(test/fixtures/rebasing/components/bootstrap/images/glyphs.gif)');
           assert.include(stdout, 'url(test/fixtures/rebasing/components/jquery-ui/images/prev.gif)');
           assert.include(stdout, 'url(test/fixtures/rebasing/components/jquery-ui/images/next.gif)');
         }
       }),
-      'relative': binaryContext('-o test/ui.bundled.css ./test/fixtures/rebasing/assets/ui.css', {
+      'relative': binaryContext('--with-rebase -o test/ui.bundled.css ./test/fixtures/rebasing/assets/ui.css', {
         'should rebase urls correctly': function () {
           var minimized = fs.readFileSync('test/ui.bundled.css', 'utf-8');
           assert.include(minimized, 'url(fixtures/rebasing/components/bootstrap/images/glyphs.gif)');
@@ -291,12 +304,26 @@ vows.describe('cleancss')
   })
   .addBatch({
     'complex import and skipped url rebasing': {
-      'absolute': binaryContext('--skip-rebase ./test/fixtures/rebasing/assets/ui.css', {
-        'should rebase urls correctly': function (error, stdout) {
+      'absolute': binaryContext('./test/fixtures/rebasing/assets/ui.css', {
+        'should not rebase urls': function (error, stdout) {
           assert.isNull(error);
           assert.include(stdout, 'url(../images/glyphs.gif)');
           assert.include(stdout, 'url(../images/prev.gif)');
           assert.include(stdout, 'url(../images/next.gif)');
+        }
+      })
+    },
+    'complex import, skipped url rebasing, and output file': {
+      'absolute': binaryContext('-o ./test/ui-no-rebase.min.css ./test/fixtures/rebasing/assets/ui.css', {
+        'should not rebase urls': function () {
+          var minimized = fs.readFileSync('./test/ui-no-rebase.min.css', 'utf-8');
+
+          assert.include(minimized, 'url(../images/glyphs.gif)');
+          assert.include(minimized, 'url(../images/prev.gif)');
+          assert.include(minimized, 'url(../images/next.gif)');
+        },
+        teardown: function () {
+          deleteFile('test/ui-no-rebase.min.css');
         }
       })
     }
@@ -416,7 +443,7 @@ vows.describe('cleancss')
       }),
       'custom': pipedContext('div{width:0.00051px}', '-O1 roundingPrecision:4', {
         'should keep 4 decimal places': function (error, stdout) {
-          assert.equal(stdout, 'div{width:.0005px}');
+          assert.equal(stdout, 'div{width:0.0005px}');
         }
       }),
       'zero': pipedContext('div{width:1.5051px}', '-O1 roundingPrecision:0', {
@@ -536,7 +563,27 @@ vows.describe('cleancss')
     }
   })
   .addBatch({
-    'source maps - output file with existing map': binaryContext('--source-map -o ./styles.min.css ./test/fixtures/source-maps/styles.css', {
+    'source maps - output file with existing map and no rebasing': binaryContext('--source-map -o ./styles.min.css ./test/fixtures/source-maps/styles.css', {
+      'includes right content in map file': function () {
+        var sourceMap = new SourceMapConsumer(fs.readFileSync('./styles.min.css.map', 'utf-8'));
+        assert.deepEqual(
+          sourceMap.originalPositionFor({ line: 1, column: 1 }),
+          {
+            source: 'test/fixtures/source-maps/styles.css',
+            line: 1,
+            column: 0,
+            name: null
+          }
+        );
+      },
+      'teardown': function () {
+        deleteFile('styles.min.css');
+        deleteFile('styles.min.css.map');
+      }
+    })
+  })
+  .addBatch({
+    'source maps - output file with existing map': binaryContext('--source-map --with-rebase -o ./styles.min.css ./test/fixtures/source-maps/styles.css', {
       'includes right content in map file': function () {
         var sourceMap = new SourceMapConsumer(fs.readFileSync('./styles.min.css.map', 'utf-8'));
         assert.deepEqual(
@@ -556,7 +603,7 @@ vows.describe('cleancss')
     })
   })
   .addBatch({
-    'source maps - output file for existing map in different folder': binaryContext('--source-map -o ./styles-relative.min.css ./test/fixtures/source-maps/relative.css', {
+    'source maps - output file for existing map in different folder': binaryContext('--source-map --with-rebase -o ./styles-relative.min.css ./test/fixtures/source-maps/relative.css', {
       'includes right content in map file': function () {
         var sourceMap = new SourceMapConsumer(fs.readFileSync('./styles-relative.min.css.map', 'utf-8'));
         assert.deepEqual(
@@ -654,15 +701,15 @@ vows.describe('cleancss')
       'topic': function() {
         var self = this;
 
-        exec('cp test/fixtures/reset.css test/fixtures/reset-removing.css', function () {
-          exec('__DIRECT__=1 ./bin/cleancss test/fixtures/reset-removing.css', self.callback);
+        exec('cp test/fixtures/reset.css test/fixtures/reset-removing-1.css', function () {
+          exec('__DIRECT__=1 ./bin/cleancss test/fixtures/reset-removing-1.css', self.callback);
         });
       },
       'keeps the file': function () {
-        assert.isTrue(fs.existsSync('test/fixtures/reset-removing.css'));
+        assert.isTrue(fs.existsSync('test/fixtures/reset-removing-1.css'));
       },
       'teardown': function () {
-        deleteFile('test/fixtures/reset-removing.css');
+        deleteFile('test/fixtures/reset-removing-1.css');
       }
     }
   })
@@ -671,12 +718,12 @@ vows.describe('cleancss')
       'topic': function() {
         var self = this;
 
-        exec('cp test/fixtures/reset.css test/fixtures/reset-removing.css', function () {
-          exec('__DIRECT__=1 ./bin/cleancss --remove-inlined-files test/fixtures/reset-removing.css', self.callback);
+        exec('cp test/fixtures/reset.css test/fixtures/reset-removing-2.css', function () {
+          exec('__DIRECT__=1 ./bin/cleancss --remove-inlined-files test/fixtures/reset-removing-2.css', self.callback);
         });
       },
       'removes the file': function () {
-        assert.isFalse(fs.existsSync('test/fixtures/reset-removing.css'));
+        assert.isFalse(fs.existsSync('test/fixtures/reset-removing-2.css'));
       }
     }
   })
@@ -685,12 +732,12 @@ vows.describe('cleancss')
       'topic': function() {
         var self = this;
 
-        exec('cp test/fixtures/reset.css test/fixtures/reset-removing.css', function () {
-          exec('echo "@import \'test/fixtures/reset-removing.css\';" | ./bin/cleancss --remove-inlined-files', self.callback);
+        exec('cp test/fixtures/reset.css test/fixtures/reset-removing-3.css', function () {
+          exec('echo "@import \'test/fixtures/reset-removing-3.css\';" | ./bin/cleancss --remove-inlined-files', self.callback);
         });
       },
       'removes the file': function () {
-        assert.isFalse(fs.existsSync('test/fixtures/reset-removing.css'));
+        assert.isFalse(fs.existsSync('test/fixtures/reset-removing-3.css'));
       }
     }
   })
@@ -719,7 +766,7 @@ vows.describe('cleancss')
   })
   .addBatch({
     'content of input-source-map': pipedContext(fs.readFileSync('./test/fixtures/source-maps/map/styles.css'), '-o ./test/styles.min.css --input-source-map ./test/fixtures/source-maps/map/input.map', {
-      'includes the right content of the source map': function() {
+      'processes content normally': function() {
         assert.isTrue(fs.existsSync('test/styles.min.css.map'));
         var sourceMap = new SourceMapConsumer(fs.readFileSync('./test/styles.min.css.map', 'utf-8'));
 
@@ -736,6 +783,189 @@ vows.describe('cleancss')
       'teardown': function () {
         deleteFile('test/styles.min.css');
         deleteFile('test/styles.min.css.map');
+      }
+    })
+  })
+  .addBatch({
+    'batch processing in piped mode': pipedContext(fs.readFileSync('./test/fixtures/partials/one.css'), '-b', {
+      'includes the right content of the source map': function (error, stdout) {
+        assert.equal(stdout, '.one{color:red}');
+      }
+    }),
+    'batch processing with explicitely given paths': binaryContext('-b ./test/fixtures-batch-1/partials/one.css ./test/fixtures-batch-1/partials/five.css', {
+      'setup': function () {
+        execSync('cp -fr test/fixtures test/fixtures-batch-1');
+      },
+      'creates two separate minified files': function () {
+        assert.isTrue(fs.existsSync('test/fixtures-batch-1/partials/one-min.css'));
+        assert.isFalse(fs.existsSync('test/fixtures-batch-1/partials/two-min.css'));
+        assert.isTrue(fs.existsSync('test/fixtures-batch-1/partials/five-min.css'));
+      },
+      'teardown': function () {
+        execSync('rm -fr test/fixtures-batch-1');
+      }
+    })
+  })
+  .addBatch({
+    'batch processing with wildard paths': binaryContext('-b ./test/fixtures-batch-2/partials/\\*\\*/*.css', {
+      'setup': function () {
+        execSync('cp -fr test/fixtures test/fixtures-batch-2');
+      },
+      'creates two separate minified files': function () {
+        assert.isTrue(fs.existsSync('test/fixtures-batch-2/partials/extra/four-min.css'));
+        assert.isTrue(fs.existsSync('test/fixtures-batch-2/partials/extra/three-min.css'));
+        assert.isTrue(fs.existsSync('test/fixtures-batch-2/partials/one-min.css'));
+        assert.isTrue(fs.existsSync('test/fixtures-batch-2/partials/two-min.css'));
+        assert.isTrue(fs.existsSync('test/fixtures-batch-2/partials/quoted-svg-min.css'));
+        assert.isTrue(fs.existsSync('test/fixtures-batch-2/partials/five-min.css'));
+      },
+      'teardown': function () {
+        execSync('rm -fr test/fixtures-batch-2');
+      }
+    })
+  })
+  .addBatch({
+    'batch processing with custom suffix': binaryContext('--batch --batch-suffix \'.min\' ./test/fixtures-batch-3/partials/one.css ./test/fixtures-batch-3/partials/five.css', {
+      'setup': function () {
+        execSync('cp -fr test/fixtures test/fixtures-batch-3');
+      },
+      'creates two separate minified files': function () {
+        assert.isFalse(fs.existsSync('test/fixtures-batch-3/partials/one-min.css'));
+        assert.isFalse(fs.existsSync('test/fixtures-batch-3/partials/two-min.css'));
+        assert.isFalse(fs.existsSync('test/fixtures-batch-3/partials/five-min.css'));
+
+        assert.isTrue(fs.existsSync('test/fixtures-batch-3/partials/one.min.css'));
+        assert.isFalse(fs.existsSync('test/fixtures-batch-3/partials/two.min.css'));
+        assert.isTrue(fs.existsSync('test/fixtures-batch-3/partials/five.min.css'));
+      },
+      'teardown': function () {
+        execSync('rm -fr test/fixtures-batch-3');
+      }
+    })
+  })
+  .addBatch({
+    'batch processing with output given': binaryContext('-b -o ./test/fixtures-batch-4-output ./test/fixtures-batch-4/partials/one.css ./test/fixtures-batch-4/partials/five.css', {
+      'setup': function () {
+        execSync('cp -fr test/fixtures test/fixtures-batch-4');
+      },
+      'does not produce any errors': function (error) {
+        assert.equal(error, '');
+      },
+      'creates two separate minified files': function () {
+        assert.isFalse(fs.existsSync('test/fixtures-batch-4/partials/one-min.css'));
+        assert.isFalse(fs.existsSync('test/fixtures-batch-4/partials/two-min.css'));
+        assert.isFalse(fs.existsSync('test/fixtures-batch-4/partials/five-min.css'));
+
+        assert.isTrue(fs.existsSync('test/fixtures-batch-4-output/one-min.css'));
+        assert.isFalse(fs.existsSync('test/fixtures-batch-4-output/two-min.css'));
+        assert.isTrue(fs.existsSync('test/fixtures-batch-4-output/five-min.css'));
+      },
+      'teardown': function () {
+        execSync('rm -fr test/fixtures-batch-4');
+        execSync('rm -fr test/fixtures-batch-4-output');
+      }
+    })
+  })
+  .addBatch({
+    'batch processing with wildcard and exclude paths': binaryContext('-b ./test/fixtures-batch-5/partials/\\*\\*/*.css !./test/fixtures-batch-5/partials/one* !./test/fixtures-batch-5/partials/fiv?.css', {
+      'setup': function () {
+        execSync('cp -fr test/fixtures test/fixtures-batch-5');
+      },
+      'creates two separate minified files': function () {
+        assert.isTrue(fs.existsSync('test/fixtures-batch-5/partials/extra/four-min.css'));
+        assert.isTrue(fs.existsSync('test/fixtures-batch-5/partials/extra/three-min.css'));
+        assert.isFalse(fs.existsSync('test/fixtures-batch-5/partials/one-min.css'));
+        assert.isTrue(fs.existsSync('test/fixtures-batch-5/partials/two-min.css'));
+        assert.isTrue(fs.existsSync('test/fixtures-batch-5/partials/quoted-svg-min.css'));
+        assert.isFalse(fs.existsSync('test/fixtures-batch-5/partials/five-min.css'));
+      },
+      'teardown': function () {
+        execSync('rm -fr test/fixtures-batch-5');
+      }
+    })
+  })
+  .addBatch({
+    'batch processing with output as a path': binaryContext('-b ./test/fixtures-batch-6/partials/\\*\\*/*.css -o test/fixtures-batch-6-output', {
+      'setup': function () {
+        execSync('cp -fr test/fixtures test/fixtures-batch-6');
+      },
+      'creates two separate minified files': function () {
+        assert.isTrue(fs.existsSync('test/fixtures-batch-6-output/extra/four-min.css'));
+        assert.isTrue(fs.existsSync('test/fixtures-batch-6-output/extra/three-min.css'));
+        assert.isTrue(fs.existsSync('test/fixtures-batch-6-output/one-min.css'));
+        assert.isTrue(fs.existsSync('test/fixtures-batch-6-output/two-min.css'));
+        assert.isTrue(fs.existsSync('test/fixtures-batch-6-output/quoted-svg-min.css'));
+        assert.isTrue(fs.existsSync('test/fixtures-batch-6-output/five-min.css'));
+      },
+      'teardown': function () {
+        execSync('rm -fr test/fixtures-batch-6');
+        execSync('rm -fr test/fixtures-batch-6-output');
+      }
+    })
+  })
+  .addBatch({
+    'batch processing with source maps': binaryContext('-b ./test/fixtures-batch-7/partials/\\*\\*/*.css --source-map', {
+      'setup': function () {
+        execSync('cp -fr test/fixtures test/fixtures-batch-7');
+        execSync('rm -fr test/fixtures-batch-7/partials/extra/four.css');
+        execSync('touch test/fixtures-batch-7/partials/extra/four.css');
+      },
+      'does not raise an error': function (error, stdout, stderr) {
+        assert.equal(stderr, '');
+      },
+      'creates source map files': function () {
+        assert.isTrue(fs.existsSync('test/fixtures-batch-7/partials/extra/three-min.css.map'));
+        assert.isTrue(fs.existsSync('test/fixtures-batch-7/partials/one-min.css.map'));
+        assert.isTrue(fs.existsSync('test/fixtures-batch-7/partials/two-min.css.map'));
+        assert.isTrue(fs.existsSync('test/fixtures-batch-7/partials/quoted-svg-min.css.map'));
+        assert.isTrue(fs.existsSync('test/fixtures-batch-7/partials/five-min.css.map'));
+      },
+      'teardown': function () {
+        execSync('rm -fr test/fixtures-batch-7');
+      }
+    })
+  })
+  .addBatch({
+    'batch processing with source maps and output as a path': binaryContext('-b ./test/fixtures-batch-8/partials/\\*\\*/*.css --source-map -o test/fixtures-batch-8-output', {
+      'setup': function () {
+        execSync('cp -fr test/fixtures test/fixtures-batch-8');
+        execSync('rm -fr test/fixtures-batch-8/partials/extra/four.css');
+        execSync('touch test/fixtures-batch-8/partials/extra/four.css');
+      },
+      'does not raise an error': function (error, stdout, stderr) {
+        assert.equal(stderr, '');
+      },
+      'creates source map files': function () {
+        assert.isTrue(fs.existsSync('test/fixtures-batch-8-output/extra/three-min.css.map'));
+        assert.isTrue(fs.existsSync('test/fixtures-batch-8-output/one-min.css.map'));
+        assert.isTrue(fs.existsSync('test/fixtures-batch-8-output/two-min.css.map'));
+        assert.isTrue(fs.existsSync('test/fixtures-batch-8-output/quoted-svg-min.css.map'));
+        assert.isTrue(fs.existsSync('test/fixtures-batch-8-output/five-min.css.map'));
+      },
+      'teardown': function () {
+        execSync('rm -fr test/fixtures-batch-8');
+        execSync('rm -fr test/fixtures-batch-8-output');
+      }
+    })
+  })
+  .addBatch({
+    'batch processing with source maps, rebase and output as a path': binaryContext('-b ./test/fixtures-batch-9/partials-relative/\\*\\*/included.css --source-map --with-rebase -o test/fixtures-batch-9-output', {
+      'setup': function () {
+        execSync('cp -fr test/fixtures test/fixtures-batch-9');
+      },
+      'does not raise an error': function (error, stdout, stderr) {
+        assert.equal(stderr, '');
+      },
+      'rebases output correctly': function () {
+        var minimized = fs.readFileSync('./test/fixtures-batch-9-output/extra/included-min.css', 'utf-8');
+        assert.equal(minimized, 'a{background:url(../fixtures-batch-9/partials/extra/down.gif) 0 0 no-repeat}\n/*# sourceMappingURL=included-min.css.map */');
+      },
+      'creates source map files': function () {
+        assert.isTrue(fs.existsSync('test/fixtures-batch-9-output/extra/included-min.css.map'));
+      },
+      'teardown': function () {
+        execSync('rm -fr test/fixtures-batch-9');
+        execSync('rm -fr test/fixtures-batch-9-output');
       }
     })
   })

@@ -521,11 +521,6 @@ vows.describe(optimizeProperties)
           ],
           [
             'property',
-            ['property-name', 'width', [[1, 83, undefined]]],
-            ['property-value', '100px', [[1, 89, undefined]]]
-          ],
-          [
-            'property',
             ['property-name', 'padding', [
               [1, 2, undefined],
               [1, 19, undefined],
@@ -536,6 +531,11 @@ vows.describe(optimizeProperties)
             ['property-value', '2px', [[1, 79, undefined]]],
             ['property-value', '3px', [[1, 51, undefined]]],
             ['property-value', '5px', [[1, 32, undefined]]]
+          ],
+          [
+            'property',
+            ['property-name', 'width', [[1, 83, undefined]]],
+            ['property-value', '100px', [[1, 89, undefined]]]
           ]
         ]);
       }
@@ -814,6 +814,35 @@ vows.describe(optimizeProperties)
           ]
         ]);
       }
+    },
+    '!important and default values': {
+      'topic': function () {
+        return _optimize('.block{border-color:currentColor!important;border-radius:0!important;border-style:none!important;border-width:medium!important;list-style-type:inherit!important;list-style-position:outside!important;list-style-image:none!important}');
+      },
+      'into': function (properties) {
+        assert.deepEqual(properties, [
+          [
+            'property',
+            ['property-name', 'border-radius', [[1, 43, undefined]]],
+            ['property-value', '0!important', [[1, 57, undefined]]]
+          ],
+          [
+            'property',
+            ['property-name', 'border', [[1, 7, undefined], [1, 69, undefined], [1, 97, undefined]]],
+            ['property-value', 'currentColor!important', [[1, 20, undefined]]]
+          ],
+          [
+            'property',
+            ['property-name', 'list-style', [[1, 161, undefined], [1, 199, undefined]]],
+            ['property-value', 'outside!important']
+          ],
+          [
+            'property',
+            ['property-name', 'list-style-type', [[1, 127, undefined]]],
+            ['property-value', 'inherit!important', [[1, 143, undefined]]]
+          ]
+        ]);
+      }
     }
   })
   .addBatch({
@@ -835,6 +864,33 @@ vows.describe(optimizeProperties)
             ['property-value', '5s', [[1, 53, undefined]]],
             ['property-value', 'ease-in', [[1, 83, undefined]]],
             ['property-value', '2s', [[1, 108, undefined]]]
+          ]
+        ]);
+      }
+    },
+    'transition when one component is multiplex': {
+      'topic': function () {
+        return _optimize('.block{transition-property:transform,margin-left;transition-delay:0ms;transition-duration:375ms;transition-timing-function:ease-out}');
+      },
+      'into': function (properties) {
+        assert.deepEqual(properties, [
+          [
+            'property',
+            ['property-name', 'transition', [
+              [1, 7, undefined],
+              [1, 49, undefined],
+              [1, 70, undefined],
+              [1, 96, undefined]
+            ]],
+            ['property-value', 'transform', [[1, 27, undefined]]],
+            ['property-value', '375ms', [[1, 90, undefined]]],
+            ['property-value', 'ease-out', [[1, 123, undefined]]],
+            ['property-value', '0ms', [[1, 66, undefined]]],
+            ['property-value', ','],
+            ['property-value', 'margin-left', [[1, 37, undefined]]],
+            ['property-value', '375ms', [[1, 90, undefined]]],
+            ['property-value', 'ease-out', [[1, 123, undefined]]],
+            ['property-value', '0ms', [[1, 66, undefined]]]
           ]
         ]);
       }

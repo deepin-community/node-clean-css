@@ -7,30 +7,17 @@ Files: *
 Copyright: 2017, JakubPawlowicz.com
 License: Expat
 
-Files: test/fixtures/bootstrap.css
+Files: test/fixtures/bootstrap*
 Copyright: 2011-2015, Twitter, Inc.
 License: Expat
 
 Files: debian/*
 Copyright:
  2013, Mike Gabriel <mike.gabriel@das-netzwerkteam.de>
+ 2021, Yadd <yadd@debian.org>
 License: Expat
 
-Files: debian/node_modules/eventemitter3/*
-Copyright: 2014, Arnout Kazemier
-License: Expat
-
-Files: debian/node_modules/http-proxy/*
-Copyright: 2010-2016, Charlie Robbins
- 2010-2016, Jarrett Cruger
- 2010-2016, Contributors
-License: Expat
-
-Files: debian/node_modules/nock/*
-Copyright: 2011-2018, Pedro Teixeira and other contributors
-License: Expat
-
-Files: debian/node_modules/server-destroy/*
+Files: debian/tests/test_modules/server-destroy/*
 Copyright: Isaac Z. Schlueter and Contributors
 License: Expat
 
