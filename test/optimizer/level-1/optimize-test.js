@@ -1,6 +1,7 @@
 var vows = require('vows');
 
 var optimizerContext = require('../../test-helper').optimizerContext;
+var optimizers = require('../../../lib/optimizer/level-1/value-optimizers');
 
 vows.describe('level 1 optimizations')
   .addBatch(
@@ -48,6 +49,54 @@ vows.describe('level 1 optimizations')
       'pseudo classes': [
         'div  :first-child{color:red}',
         'div :first-child{color:red}'
+      ],
+      'pseudo classes - nth-child(1) to first-child': [
+        '.block:nth-child(1){color:red}',
+        '.block:first-child{color:red}'
+      ],
+      'pseudo classes - nth-of-type(1) to first-of-type': [
+        '.block:nth-of-type(1){color:red}',
+        '.block:first-of-type{color:red}'
+      ],
+      'pseudo classes - nth-of-type(even) to nth-of-type(2n)': [
+        '.block:nth-of-type(even){color:red}',
+        '.block:nth-of-type(2n){color:red}'
+      ],
+      'pseudo classes - nth-child(even) to nth-child(2n)': [
+        '.block:nth-child(even){color:red}',
+        '.block:nth-child(2n){color:red}'
+      ],
+      'pseudo classes - nth-of-type(2n+1) to nth-of-type(odd)': [
+        '.block:nth-of-type(2n+1){color:red}',
+        '.block:nth-of-type(odd){color:red}'
+      ],
+      'pseudo classes - nth-child(2n+1) to nth-child(odd)': [
+        '.block:nth-child(2n+1){color:red}',
+        '.block:nth-child(odd){color:red}'
+      ],
+      'pseudo classes - nth-last-child(1) to last-child': [
+        '.block:nth-last-child(1){color:red}',
+        '.block:last-child{color:red}'
+      ],
+      'pseudo classes - nth-last-of-type(1) to last-of-type': [
+        '.block:nth-last-of-type(1){color:red}',
+        '.block:last-of-type{color:red}'
+      ],
+      'pseudo classes - nth-last-of-type(even) to nth-last-of-type(2n)': [
+        '.block:nth-last-of-type(even){color:red}',
+        '.block:nth-last-of-type(2n){color:red}'
+      ],
+      'pseudo classes - nth-last-child(even) to nth-last-child(2n)': [
+        '.block:nth-last-child(even){color:red}',
+        '.block:nth-last-child(2n){color:red}'
+      ],
+      'pseudo classes - nth-last-of-type(2n+1) to nth-last-of-type(odd)': [
+        '.block:nth-last-of-type(2n+1){color:red}',
+        '.block:nth-last-of-type(odd){color:red}'
+      ],
+      'pseudo classes - nth-last-child(2n+1) to nth-last-child(odd)': [
+        '.block:nth-last-child(2n+1){color:red}',
+        '.block:nth-last-child(odd){color:red}'
       ],
       'tabs': [
         'div\t\t{color:red}',
@@ -248,6 +297,34 @@ vows.describe('level 1 optimizations')
     }, { level: 1, compatibility: { selectors: { adjacentSpace: true } } })
   )
   .addBatch(
+    optimizerContext('selectors - rule list in a pseudo class', {
+      'space is not removed': [
+        ':host-context(main article){color:red}',
+        ':host-context(main article){color:red}'
+      ],
+      'extra spaces are removed': [
+        ':host-context(main   article){color:red}',
+        ':host-context(main article){color:red}'
+      ],
+      'extra spaces with comma are removed': [
+        ':host-context(main,   article){color:red}',
+        ':host-context(main,article){color:red}'
+      ],
+      'space is not removed in multiple rules': [
+        ':host-context(main footer),:host-context(main header){color:red}',
+        ':host-context(main footer),:host-context(main header){color:red}'
+      ],
+      'space is not removed from :not pseudo-class': [
+        ':not(.block1 .block1__block2){color:red}',
+        ':not(.block1 .block1__block2){color:red}'
+      ],
+      'space in scoped pseudo class': [
+        '.container:not(#BorlabsCookieBox .container){max-width:1280px!important}',
+        '.container:not(#BorlabsCookieBox .container){max-width:1280px!important}'
+      ]
+    }, { level: 1 })
+  )
+  .addBatch(
     optimizerContext('selectors - disabled empty removal', {
       'no body': [
         'a{}',
@@ -369,6 +446,30 @@ vows.describe('level 1 optimizations')
         'a{color:rgba(240,0,0,0)}',
         'a{color:rgba(240,0,0,0)}'
       ],
+      'space-separated rgb': [
+        'a{color:rgba(240 0 0)}',
+        'a{color:rgba(240 0 0)}'
+      ],
+      'space-separated rgba': [
+        'a{color:rgba(240 0 0 / .1)}',
+        'a{color:rgba(240 0 0 / .1)}'
+      ],
+      'space-separated hsl': [
+        'a{color:hsla(240 0% 0%)}',
+        'a{color:hsla(240 0% 0%)}'
+      ],
+      'space-separated hsla': [
+        'a{color:hsla(240 0% 0% / 10%)}',
+        'a{color:hsla(240 0% 0% / 10%)}'
+      ],
+      'space-separated hsl with deg': [
+        'a{color:hsla(240deg 0% 0%)}',
+        'a{color:hsla(240deg 0% 0%)}'
+      ],
+      'space-separated hsla with deg': [
+        'a{color:hsla(240deg 0% 0% / .1)}',
+        'a{color:hsla(240deg 0% 0% / .1)}'
+      ],
       'partial hex to name': [
         'a{color:#f00000}',
         'a{color:#f00000}'
@@ -413,9 +514,17 @@ vows.describe('level 1 optimizations')
         '.block{color:#00ff0080}',
         '.block{color:#00ff0080}'
       ],
-      'rgba inside a function': [
+      'hsla with variables': [
+        '.block{color: hsl(0, 0%, calc((var(--button_color_l) - 65) * -100%))}',
+        '.block{color:hsl(0,0%,calc((var(--button_color_l) - 65) * -100%))}'
+      ],
+      'rgba inside a function #1': [
         '.block{background-image:linear-gradient(to right,rgba(255,255,255,0),rgba(255,255,255,1))}',
         '.block{background-image:linear-gradient(to right,rgba(255,255,255,0),#fff)}'
+      ],
+      'rgba inside a function #2': [
+        '.block{background:linear-gradient(hsla(0,0%,98%,.8),hsla(0,0%,98%,.8)) 0 0/100% 1px no-repeat #f0de98}',
+        '.block{background:linear-gradient(hsla(0,0%,98%,.8),hsla(0,0%,98%,.8)) 0 0/100% 1px no-repeat #f0de98}'
       ]
     }, { level: 1 })
   )
@@ -618,6 +727,54 @@ vows.describe('level 1 optimizations')
         'a{color:red!important}'
       ]
     }, { level: 1 })
+  )
+  .addBatch(
+    optimizerContext('ie hacks in IE11 mode', {
+      'underscore': [
+        'a{_width:101px}',
+        ''
+      ],
+      'asterisk': [
+        'a{*width:101px}',
+        ''
+      ],
+      '\\0 backslash': [
+        'a{width:101px\\0}',
+        'a{width:101px\\0}'
+      ],
+      '\\9 backslash': [
+        'a{width:101px\\9}',
+        'a{width:101px\\9}'
+      ],
+      'bang': [
+        'a{color:red !ie}',
+        ''
+      ]
+    }, { level: 1, compatibility: 'ie11' })
+  )
+  .addBatch(
+    optimizerContext('ie hacks in IE10 mode', {
+      'underscore': [
+        'a{_width:101px}',
+        ''
+      ],
+      'asterisk': [
+        'a{*width:101px}',
+        ''
+      ],
+      '\\0 backslash': [
+        'a{width:101px\\0}',
+        'a{width:101px\\0}'
+      ],
+      '\\9 backslash': [
+        'a{width:101px\\9}',
+        'a{width:101px\\9}'
+      ],
+      'bang': [
+        'a{color:red !ie}',
+        ''
+      ]
+    }, { level: 1, compatibility: 'ie10' })
   )
   .addBatch(
     optimizerContext('ie hacks in IE9 mode', {
@@ -896,6 +1053,30 @@ vows.describe('level 1 optimizations')
     }, { level: 1, compatibility: 'ie8' })
   )
   .addBatch(
+    optimizerContext('rpx unit when disabled in level 1', {
+      'is kept': [
+        '.block{border:2rpx solid #ddd}',
+        '.block{border:2rpx solid #ddd}'
+      ]
+    }, { level: 1 })
+  )
+  .addBatch(
+    optimizerContext('rpx unit when disabled in level 2', {
+      'is removed': [
+        '.block{border:2rpx solid #ddd}',
+        '.block{border:solid #ddd}'
+      ]
+    }, { level: 2 })
+  )
+  .addBatch(
+    optimizerContext('rpx unit when enabled in level 2', {
+      'is removed': [
+        '.block{border:2rpx solid #ddd}',
+        '.block{border:2rpx solid #ddd}'
+      ]
+    }, { level: 2, compatibility: { customUnits: { rpx: true } } })
+  )
+  .addBatch(
     optimizerContext('zeros', {
       '-0 to 0': [
         'a{margin:-0}',
@@ -992,6 +1173,22 @@ vows.describe('level 1 optimizations')
       'max-width': [
         'a{max-width:0%}',
         'a{max-width:0%}'
+      ],
+      'zero inside min function': [
+        '.block{width:min(0px, 30px)}',
+        '.block{width:min(0px,30px)}'
+      ],
+      'zero inside max function': [
+        '.block{width:max(0px, 30px)}',
+        '.block{width:max(0px,30px)}'
+      ],
+      'zero inside clamp function': [
+        '.block{width:clamp(0rem, 2.5vw, 2rem)}',
+        '.block{width:clamp(0rem,2.5vw,2rem)}'
+      ],
+      'inside calc inside a gradient': [
+        '.block{background:linear-gradient(red 0rem calc(50% - 0rem),#00f calc(50% + 0rem) 100%)}',
+        '.block{background:linear-gradient(red 0 calc(50% - 0rem),#00f calc(50% + 0rem) 100%)}'
       ]
     }, { level: 1 })
   )
@@ -1076,6 +1273,10 @@ vows.describe('level 1 optimizations')
       'line breaks and special comments inside a rule': [
         'a{\ncolor:red;\n/*!*/\n\n\n\n\n\n\n/*!*/\n}',
         'a{color:red/*!*//*!*/}'
+      ],
+      'inside URL': [
+        'a{background:url(    "about:blank"  )}',
+        'a{background:url("about:blank")}'
       ]
     }, { level: 1 })
   )
@@ -1256,6 +1457,18 @@ vows.describe('level 1 optimizations')
     }, { level: 1 })
   )
   .addBatch(
+    optimizerContext('variable declaration', {
+      'with whitespace as value': [
+        'a{--test: }',
+        'a{--test: }'
+      ],
+      'multiple variables': [
+        'a{--test1: ;--test2: }',
+        'a{--test1: ;--test2: }'
+      ],
+    }, { level: 1 })
+  )
+  .addBatch(
     optimizerContext('@charset cleanup off', {
       'stays where it is': [
         '.block{color:#f10}@charset \'utf-8\';b{font-weight:bolder}',
@@ -1414,5 +1627,49 @@ vows.describe('level 1 optimizations')
           '.block > .another-block{animation-duration:500ms;font:"Arial";margin:010px}'
       ]
     }, { level: { 1: { all: false } } })
+  )
+  .addBatch(
+    optimizerContext('variable optimizations without optimizers given', {
+      'removes whitespace': [
+        '.block{--custom: #ff0000}',
+        '.block{--custom:#ff0000}'
+      ]
+    })
+  )
+  .addBatch(
+    optimizerContext('variable optimizations with optimizers given', {
+      'optimizes colors': [
+        '.block{--custom: #ff0000}',
+        '.block{--custom:red}'
+      ],
+      'optimizes precision': [
+        '.block{--custom: 0.12125111111rem}',
+        '.block{--custom:0.121rem}'
+      ]
+    }, {level: { 1: { roundingPrecision: 3, variableValueOptimizers: [optimizers.color, optimizers.precision] } } })
+  )
+  .addBatch(
+    optimizerContext('variable optimizations with optimizers given as strings', {
+      'optimizes colors': [
+        '.block{--custom: #ff0000}',
+        '.block{--custom:red}'
+      ],
+      'optimizes precision': [
+        '.block{--custom: 0.12125111111rem}',
+        '.block{--custom:0.121rem}'
+      ]
+    }, {level: { 1: { roundingPrecision: 3, variableValueOptimizers: ['color', 'precision'] } } })
+  )
+  .addBatch(
+    optimizerContext('variable optimizations with invalid optimizers', {
+      'optimizes colors': [
+        '.block{--custom: #ff0000}',
+        '.block{--custom:#ff0000}'
+      ],
+      'optimizes precision': [
+        '.block{--custom: 0.12125111111rem}',
+        '.block{--custom:0.12125111111rem}'
+      ]
+    }, {level: { 1: { variableValueOptimizers: ['boom!'] } } })
   )
   .export(module);

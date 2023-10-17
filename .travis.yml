@@ -1,9 +1,10 @@
-sudo: false
+arch:
+ - ppc64le
 language: node_js
 cache: npm
 node_js:
-  - 4
-  - 6
-  - 7
+  - 10
+  - 12
+  - 14
 matrix:
   fast_finish: true
