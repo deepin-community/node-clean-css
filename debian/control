@@ -15,14 +15,13 @@ Build-Depends: debhelper-compat (= 13)
  , node-http-proxy <!nocheck>
  , node-json-stringify-safe <!nocheck>
  , node-lodash <!nocheck>
- , node-nock <!nocheck>
  , node-propagate <!nocheck>
  , node-qs <!nocheck>
  , node-requires-port <!nocheck>
  , node-semver <!nocheck>
  , node-source-map <!nocheck>
  , node-vows <!nocheck>
-Standards-Version: 4.6.1
+Standards-Version: 4.6.2
 Vcs-Browser: https://salsa.debian.org/js-team/node-clean-css
 Vcs-Git: https://salsa.debian.org/js-team/node-clean-css.git
 Homepage: https://github.com/jakubpawlowicz/clean-css

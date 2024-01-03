@@ -21,6 +21,10 @@ Files: debian/tests/test_modules/server-destroy/*
 Copyright: Isaac Z. Schlueter and Contributors
 License: Expat
 
+Files: debian/tests/test_modules/nock/*
+Copyright: 2011-2019 Pedro Teixeira and other contributors
+License: Expat
+
 License: Expat
  Permission is hereby granted, free of charge, to any person obtaining a
  copy of this software and associated documentation files (the "Software"),

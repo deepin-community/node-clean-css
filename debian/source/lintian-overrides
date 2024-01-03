@@ -1,7 +1,7 @@
 # Same authors
 add-component-copyright cli *
 # False positives
-source-is-missing *test/integration-test.js*
-source-contains-prebuilt-javascript-object *test/integration-test.js*
+source-is-missing [*test/integration-test.js*]
+source-contains-prebuilt-javascript-object [*test/integration-test.js*]
 very-long-line-length-in-source-file *test/integration-test.js*
 very-long-line-length-in-source-file *test/fixtures/*
